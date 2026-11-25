@@ -9,8 +9,8 @@
      NUNCA colocar aquí la clave "service_role".
    ===================================================================== */
 window.VITRAL_CONFIG = {
-  supabaseUrl: '',          // p. ej. 'https://xxxxxxxx.supabase.co'
-  supabaseAnonKey: '',      // clave anon public
+  supabaseUrl: 'https://wwiskhqnswewtuxyqhod.supabase.co',
+  supabaseAnonKey: 'sb_publishable_5uMeIiu09vzhMSb3TAHTRA_hylOIHnd',   // clave pública (publishable)
 
   // Correo institucional que aparece para dudas y vinculación de cuentas
   correoContacto: 'clrah@mingob.gob.pa',
