@@ -83,3 +83,15 @@
   .barra .acciones { margin-left: 0; width: 100%; }
   .barra .acciones .btn { flex: 1; }
 }
+
+/* Selector de categorías (lista desplegable + etiquetas) ---------------- */
+.cat-elegidas { display: flex; flex-wrap: wrap; gap: 6px; }
+.cat-etiqueta {
+  display: inline-flex; align-items: center; gap: 6px; background: var(--azul-l); color: var(--azul-d);
+  border: 1px solid #C7D7F3; border-radius: 6px; padding: 4px 4px 4px 10px; font-size: 12px; font-weight: 600;
+}
+.cat-quitar { background: none; border: none; color: var(--azul-d); font-size: 16px; line-height: 1; cursor: pointer; padding: 0 6px; border-radius: 4px; }
+.cat-quitar:hover { background: #D6E3FB; }
+
+/* Coordenadas ---------------------------------------------------------- */
+.ubic-coords .mapa.selector { margin-top: 8px; }

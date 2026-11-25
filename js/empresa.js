@@ -157,7 +157,13 @@ function pintar(e, certs, vistaPrevia) {
           <div class="card-titulo">Ubicación</div>
           ${e.lat != null && e.lng != null
             ? `<div class="mapa bajo mt" id="mapa-punto" aria-label="Mapa de ubicación"></div>
-               <a class="texto-chico" href="https://www.openstreetmap.org/?mlat=${e.lat}&mlon=${e.lng}#map=16/${e.lat}/${e.lng}" target="_blank" rel="noopener">Abrir en mapa externo</a>`
+               <dl class="dl mt" style="grid-template-columns:90px 1fr">
+                 <dt>Latitud</dt><dd>${e.lat}</dd><dt>Longitud</dt><dd>${e.lng}</dd>
+               </dl>
+               <div class="acciones mt">
+                 <a class="btn btn-sec btn-sm" href="https://www.google.com/maps/search/?api=1&query=${e.lat},${e.lng}" target="_blank" rel="noopener">Abrir en Google Maps</a>
+                 <a class="btn btn-texto btn-sm" href="https://www.google.com/maps/dir/?api=1&destination=${e.lat},${e.lng}" target="_blank" rel="noopener">Cómo llegar</a>
+               </div>`
             : `<p class="texto-gris texto-chico mt">${esc(e.direccion || 'Sin dirección registrada')}<br>Coordenadas aún no registradas.</p>`}
         </section>
       </aside>

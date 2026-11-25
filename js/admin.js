@@ -12,6 +12,7 @@ import { filaBitacora, CABECERA_BITACORA } from './bitacora.js';
 
 const S = { usuario: null, empresas: [], certs: [], requisitos: [], categorias: [], cuentas: [], config: {} };
 const nombreEmpresa = id => S.empresas.find(e => e.id === id)?.nombre_comercial || '—';
+const correoCuenta = id => S.cuentas.find(c => c.id === id)?.correo || 'Proveedor en registro';
 const cargados = new Set();
 
 init();
@@ -68,7 +69,7 @@ function pintarKPIs() {
   $('#k-ubic').textContent = pub.filter(e => e.lat == null).length;
   $('#c-sol').textContent = rev;
   $('#c-cert').textContent = certPend;
-  $('#c-cat').textContent = S.categorias.filter(c => !c.activa && c.propuesta_por).length;
+  $('#c-cat').textContent = S.categorias.filter(c => !c.activa && (c.propuesta_por || c.creada_por)).length;
   $('#c-cta').textContent = S.cuentas.filter(c => c.solicita_empresa_id).length;
 }
 
@@ -478,7 +479,7 @@ function editarRequisito(r) {
    CATEGORÍAS
    ====================================================================== */
 function pintarCategorias() {
-  const propuestas = S.categorias.filter(c => !c.activa && c.propuesta_por);
+  const propuestas = S.categorias.filter(c => !c.activa && (c.propuesta_por || c.creada_por));
   $('#p-categorias').innerHTML = `
   <section class="card">
     <div class="card-cab">
@@ -486,27 +487,33 @@ function pintarCategorias() {
         <div class="card-sub">Se usan para clasificar empresas e inventarios y como filtro del vitral.</div></div>
       <button class="btn btn-primario" id="nueva-cat">Nueva categoría</button>
     </div>
-    <label class="check" style="margin-bottom:12px"><input type="checkbox" id="cfg-prop" ${S.config.proveedores_proponen_categorias === true ? 'checked' : ''}>
-      Permitir que los proveedores propongan nuevas categorías (requieren su aprobación)</label>
-    ${propuestas.length ? `<div class="alerta info">${propuestas.length} categoría${propuestas.length > 1 ? 's' : ''} propuesta${propuestas.length > 1 ? 's' : ''} por proveedores en espera de aprobación.</div>` : ''}
+    <div class="rejilla" style="gap:8px;margin-bottom:14px">
+      <label class="check"><input type="checkbox" data-cfg="proveedores_proponen_categorias" ${S.config.proveedores_proponen_categorias === true ? 'checked' : ''}>
+        Permitir que los proveedores agreguen categorías nuevas ("Otra categoría" en los formularios)</label>
+      <label class="check"><input type="checkbox" data-cfg="categorias_requieren_aprobacion" ${S.config.categorias_requieren_aprobacion === true ? 'checked' : ''}>
+        Las categorías nuevas de proveedores requieren mi aprobación antes de publicarse</label>
+    </div>
+    ${propuestas.length ? `<div class="alerta info">${propuestas.length} categoría${propuestas.length > 1 ? 's' : ''} agregada${propuestas.length > 1 ? 's' : ''} por proveedores en espera de aprobación.</div>` : ''}
     <div class="tabla-cont"><table class="tabla">
-      <thead><tr><th>Categoría</th><th>Estado</th><th>Propuesta por</th><th class="num">Orden</th><th class="acc">Acciones</th></tr></thead>
+      <thead><tr><th>Categoría</th><th>Estado</th><th>Agregada por</th><th class="num">Orden</th><th class="acc">Acciones</th></tr></thead>
       <tbody>${S.categorias.map(c => `<tr>
         <td><div class="principal">${esc(c.nombre)}</div><div class="secundario">${esc(c.descripcion || '')}</div></td>
-        <td>${c.activa ? '<span class="badge b-exito">Activa</span>' : c.propuesta_por ? '<span class="badge b-aviso">Propuesta</span>' : '<span class="badge b-neutro">Inactiva</span>'}</td>
-        <td>${c.propuesta_por ? esc(nombreEmpresa(c.propuesta_por)) : '—'}</td>
+        <td>${c.activa ? '<span class="badge b-exito">Activa</span>' : (c.propuesta_por || c.creada_por) ? '<span class="badge b-aviso">Pendiente</span>' : '<span class="badge b-neutro">Inactiva</span>'}</td>
+        <td>${c.propuesta_por ? esc(nombreEmpresa(c.propuesta_por)) : c.creada_por ? esc(correoCuenta(c.creada_por)) : 'CLRAH'}</td>
         <td class="num">${c.orden}</td>
-        <td class="acc">${!c.activa ? `<button class="btn btn-texto btn-sm" data-aprobar="${c.id}">${c.propuesta_por ? 'Aprobar' : 'Activar'}</button>` : ''}
+        <td class="acc">${!c.activa ? `<button class="btn btn-texto btn-sm" data-aprobar="${c.id}">${c.propuesta_por || c.creada_por ? 'Aprobar' : 'Activar'}</button>` : ''}
           <button class="btn btn-texto btn-sm" data-editar="${c.id}">Editar</button>
           <button class="btn btn-texto btn-sm" style="color:var(--error-text)" data-borrar="${c.id}">Eliminar</button></td>
       </tr>`).join('')}</tbody></table></div>
   </section>`;
-  $('#cfg-prop').addEventListener('change', async ev => {
-    const { error } = await sb.from('configuracion').update({ valor: ev.target.checked }).eq('clave', 'proveedores_proponen_categorias');
-    if (error) { toast(mensajeError(error), 'error'); ev.target.checked = !ev.target.checked; return; }
-    S.config.proveedores_proponen_categorias = ev.target.checked;
+  $$('#p-categorias [data-cfg]').forEach(chk => chk.addEventListener('change', async ev => {
+    const clave = ev.target.dataset.cfg;
+    let { data, error } = await sb.from('configuracion').update({ valor: ev.target.checked }).eq('clave', clave).select();
+    if (!error && !data.length) ({ data, error } = await sb.from('configuracion').insert({ clave, valor: ev.target.checked }).select());
+    if (error || !data?.length) { toast(error ? mensajeError(error) : 'No se pudo guardar.', 'error'); ev.target.checked = !ev.target.checked; return; }
+    S.config[clave] = ev.target.checked;
     toast('Configuración guardada.', 'exito');
-  });
+  }));
   $('#nueva-cat').addEventListener('click', () => editarCategoria(null));
   $$('#p-categorias [data-editar]').forEach(b => b.addEventListener('click', () => editarCategoria(S.categorias.find(c => c.id === b.dataset.editar))));
   $$('#p-categorias [data-aprobar]').forEach(b => b.addEventListener('click', async () => {

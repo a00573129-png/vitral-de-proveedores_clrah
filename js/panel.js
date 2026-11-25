@@ -10,7 +10,7 @@ import {
   marcarErrores, exigirSesion, cerrarSesion, pintarHeader, pie, activarTabs, parametro, todos, nombreArchivo, verDocumento,
   ESTADOS, ESTADOS_CERT, DISPONIBILIDAD
 } from './comun.js';
-import { htmlDatosGenerales, htmlUbicacion, htmlCategorias, activarUbicacion, categoriasMarcadas, validar, separar } from './form-empresa.js';
+import { htmlDatosGenerales, htmlUbicacion, htmlCategorias, activarUbicacion, activarCategorias, categoriasMarcadas, validar, separar } from './form-empresa.js';
 import { tablaInventario, monograma } from './fichas.js';
 import { filaBitacora, CABECERA_BITACORA } from './bitacora.js';
 
@@ -214,8 +214,8 @@ function pintarSolicitud() {
 function pintarEmpresa() {
   const e = S.empresa;
   const bloqueados = (!S.esAdmin && e.estado === 'aprobado') ? ['nombre_comercial', 'razon_social', 'identificacion_fiscal'] : [];
-  const puedeProponer = !S.esAdmin && S.config.proveedores_proponen_categorias === true;
-  const visibles = S.categorias.filter(c => c.activa || S.catEmpresa.has(c.id) || c.propuesta_por === S.empresaId);
+  const permitirNueva = puedeAgregarCategorias();
+  const visibles = categoriasUsables();
   const dis = editable() ? '' : 'disabled';
   $('#p-empresa').innerHTML = `
   <form id="f-emp" novalidate>
@@ -246,14 +246,11 @@ function pintarEmpresa() {
     </section>
     <section class="card">
       <div class="card-titulo">Categorías de productos y servicios</div>
-      <div class="card-sub">Seleccione todas las que apliquen.</div>
-      <div class="mt">${htmlCategorias(visibles, S.catEmpresa)}</div>
+      <div class="card-sub">Elija de la lista todas las que apliquen${permitirNueva ? '. Si la suya no aparece, use "Otra categoría" al final de la lista' : ''}.
+        Los cambios se aplican al pulsar "Guardar cambios".</div>
+      <div class="mt">${htmlCategorias(visibles, S.catEmpresa, { permitirNueva })}</div>
       <p class="error-campo" id="err-cat" hidden></p>
-      ${puedeProponer ? `<div class="flex mt">
-        <div class="campo crece" style="max-width:360px"><label for="nueva-cat">Proponer una categoría nueva</label>
-          <input type="text" id="nueva-cat" maxlength="80" placeholder="Nombre de la categoría"></div>
-        <button type="button" class="btn btn-sec" id="proponer" style="align-self:flex-end">Enviar propuesta</button></div>
-        <p class="ayuda texto-chico texto-gris" style="margin-top:6px">El CLRAH revisará la propuesta antes de publicarla.</p>` : ''}
+      ${S.config.categorias_requieren_aprobacion === true && !S.esAdmin ? '<p class="ayuda texto-chico texto-gris mt" style="margin-top:6px">Las categorías nuevas se publican cuando el CLRAH las aprueba; mientras tanto puede usarlas en su empresa.</p>' : ''}
     </section>
     <div class="acciones der"><button type="submit" class="btn btn-primario">Guardar cambios</button></div>
     </fieldset>
@@ -261,10 +258,10 @@ function pintarEmpresa() {
 
   const f = $('#f-emp');
   selectorMapa = activarUbicacion(f, e);
+  activarCategorias(f, visibles, { permitirNueva, crearCategoria });
   f.addEventListener('submit', guardarEmpresa);
   $('#logo')?.addEventListener('change', subirLogo);
   $('#quitar-logo')?.addEventListener('click', quitarLogo);
-  $('#proponer')?.addEventListener('click', proponerCategoria);
 }
 
 async function guardarEmpresa(ev) {
@@ -331,15 +328,25 @@ async function quitarLogo() {
   await recargar('empresa');
 }
 
-async function proponerCategoria(ev) {
-  const nombre = $('#nueva-cat').value.trim();
-  if (nombre.length < 3) { toast('Escriba el nombre de la categoría.', 'error'); return; }
-  await conCarga(ev.target, async () => {
-    const { error } = await sb.from('categorias').insert({ nombre, activa: false, propuesta_por: S.empresaId });
-    if (error) { toast(mensajeError(error), 'error'); return; }
-    toast('Propuesta enviada al CLRAH. Puede asignarla a su empresa mientras se revisa.', 'exito', 6000);
-    await recargar('empresa');
-  });
+/* Categorías: las que la empresa puede usar y alta de nuevas ------------- */
+function puedeAgregarCategorias() {
+  return S.esAdmin || S.config.proveedores_proponen_categorias === true;
+}
+
+function categoriasUsables() {
+  return S.categorias.filter(c => c.activa || S.catEmpresa.has(c.id) ||
+    c.propuesta_por === S.empresaId || c.creada_por === S.usuario.id);
+}
+
+/** Crea (o reutiliza) una categoría en la base de datos y la agrega al estado local. */
+async function crearCategoria(nombre) {
+  const { data, error } = await sb.rpc('agregar_categoria', { p_nombre: nombre });
+  if (error) throw new Error(mensajeError(error));
+  if (!S.categorias.some(c => c.id === data.id)) {
+    S.categorias.push({ id: data.id, nombre: data.nombre, activa: data.activa, propuesta_por: S.esAdmin ? null : S.empresaId, creada_por: S.usuario.id });
+  }
+  toast(data.existente ? `La categoría "${data.nombre}" ya existía; se seleccionó.` : `Categoría "${data.nombre}" agregada.`, 'exito', 3500);
+  return data;
 }
 
 /* ----------------------------------------------------------------------
@@ -418,7 +425,8 @@ function filaSpec(s = {}) {
 function editarProducto(p) {
   const nuevo = !p;
   p = p || { tipo: 'producto', disponibilidad: 'sin_especificar', activo: true, especificaciones: [] };
-  const cats = S.categorias.filter(c => c.activa || S.catEmpresa.has(c.id));
+  const cats = categoriasUsables().sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+  const permitirNueva = puedeAgregarCategorias();
   const m = abrirModal(`
     <form id="f-prod" class="rejilla c2" novalidate>
       <div class="campo ancho-total"><span class="etq">Tipo</span>
@@ -430,7 +438,12 @@ function editarProducto(p) {
         <input type="text" id="p-nombre" name="nombre" value="${esc(p.nombre || '')}" maxlength="300"></div>
       <div class="campo"><label for="p-cat">Categoría</label>
         <select id="p-cat" name="categoria_id"><option value="">Sin categoría</option>
-          ${cats.map(c => `<option value="${esc(c.id)}" ${p.categoria_id === c.id ? 'selected' : ''}>${esc(c.nombre)}</option>`).join('')}</select></div>
+          ${cats.map(c => `<option value="${esc(c.id)}" ${p.categoria_id === c.id ? 'selected' : ''}>${esc(c.nombre)}${c.activa === false ? ' (pendiente)' : ''}</option>`).join('')}
+          ${permitirNueva ? '<option value="__nueva">+ Otra categoría (escribir una nueva)…</option>' : ''}</select>
+        <div class="flex" id="p-cat-nueva" style="margin-top:6px" hidden>
+          <input type="text" id="p-cat-nombre" maxlength="80" placeholder="Nombre de la nueva categoría" aria-label="Nombre de la nueva categoría" style="flex:1">
+          <button type="button" class="btn btn-primario btn-sm" id="p-cat-crear">Agregar</button>
+        </div></div>
       <div class="campo"><label for="p-disp">Disponibilidad</label>
         <select id="p-disp" name="disponibilidad">${Object.entries(DISPONIBILIDAD)
           .map(([k, v]) => `<option value="${k}" ${p.disponibilidad === k ? 'selected' : ''}>${esc(v.txt)}</option>`).join('')}</select></div>
@@ -460,9 +473,33 @@ function editarProducto(p) {
   const specs = m.el.querySelector('#specs');
   m.el.querySelector('#mas-spec').addEventListener('click', () => { specs.insertAdjacentHTML('beforeend', filaSpec()); specs.lastElementChild.querySelector('input').focus(); });
   specs.addEventListener('click', ev => { if (ev.target.matches('[data-quitar-spec]')) ev.target.closest('.spec-fila').remove(); });
+  const selCat = f.categoria_id;
+  let catPrevia = selCat.value;
+  selCat.addEventListener('change', () => {
+    const otra = selCat.value === '__nueva';
+    m.el.querySelector('#p-cat-nueva').hidden = !otra;
+    if (otra) { selCat.value = catPrevia; m.el.querySelector('#p-cat-nombre').focus(); } else catPrevia = selCat.value;
+  });
+  m.el.querySelector('#p-cat-nombre')?.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); m.el.querySelector('#p-cat-crear').click(); } });
+  m.el.querySelector('#p-cat-crear')?.addEventListener('click', async ev => {
+    const nombre = m.el.querySelector('#p-cat-nombre').value.trim();
+    if (nombre.length < 2) { m.el.querySelector('#p-cat-nombre').setAttribute('aria-invalid', 'true'); return; }
+    await conCarga(ev.target, async () => {
+      try {
+        const c = await crearCategoria(nombre);
+        if (![...selCat.options].some(o => o.value === c.id)) {
+          selCat.querySelector('option[value="__nueva"]').insertAdjacentHTML('beforebegin', `<option value="${esc(c.id)}">${esc(c.nombre)}</option>`);
+        }
+        selCat.value = catPrevia = c.id;
+        m.el.querySelector('#p-cat-nueva').hidden = true;
+        m.el.querySelector('#p-cat-nombre').value = '';
+      } catch (e) { toast(e.message, 'error', 6000); }
+    });
+  });
   m.el.querySelector('[data-cancelar]').addEventListener('click', m.cerrar);
   m.el.querySelector('[data-guardar]').addEventListener('click', async ev => {
     const d = leerForm(f);
+    if (d.categoria_id === '__nueva') d.categoria_id = null;
     if (!marcarErrores(f, d.nombre ? {} : { nombre: 'Escriba el nombre.' })) return;
     if (d.existencia !== null && (isNaN(Number(d.existencia)) || Number(d.existencia) < 0)) { marcarErrores(f, { existencia: 'Debe ser un número mayor o igual a cero.' }); return; }
     const fila = {
@@ -481,6 +518,11 @@ function editarProducto(p) {
       const { data, error } = await q;
       if (error) { toast(mensajeError(error), 'error', 7000); return; }
       if (nuevo) S.productos.push(data); else Object.assign(S.productos.find(x => x.id === p.id), data);
+      // Si el producto usa una categoría que la empresa aún no tiene, se agrega a su perfil
+      if (data.categoria_id && !S.catEmpresa.has(data.categoria_id)) {
+        const r = await sb.from('empresa_categorias').insert({ empresa_id: S.empresaId, categoria_id: data.categoria_id });
+        if (!r.error) { S.catEmpresa.add(data.categoria_id); pintarEmpresa(); }
+      }
       S.productos.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
       m.cerrar();
       toast(nuevo ? 'Agregado al inventario.' : 'Cambios guardados.', 'exito');

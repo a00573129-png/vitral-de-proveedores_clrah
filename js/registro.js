@@ -7,11 +7,12 @@ import {
   sb, configurado, config, $, esc, mensajeError, pintarHeader, pie, conCarga, leerForm, marcarErrores,
   correoValido, cargarPerfil, avisoSinConfiguracion, toast, cerrarSesion
 } from './comun.js';
-import { htmlDatosGenerales, htmlUbicacion, htmlCategorias, activarUbicacion, categoriasMarcadas, validar, separar } from './form-empresa.js';
+import { htmlDatosGenerales, htmlUbicacion, htmlCategorias, activarUbicacion, activarCategorias, categoriasMarcadas, validar, separar } from './form-empresa.js';
 
 const cont = $('#contenido');
 const datos = {};   // acumulado de los pasos 2 y 3
 let categorias = [];
+let permitirNueva = true;
 
 init();
 
@@ -42,9 +43,13 @@ async function init() {
   const solicitada = r.usuario.user_metadata?.solicita_empresa;
   if (solicitada) return pasoVinculo(solicitada);
 
-  const { data, error } = await sb.from('categorias').select('id, nombre, activa').eq('activa', true).order('orden').order('nombre');
-  if (error) { cont.innerHTML = `<div class="alerta error">${esc(mensajeError(error))}</div>`; return; }
-  categorias = data;
+  const [cats, cfg] = await Promise.all([
+    sb.from('categorias').select('id, nombre, activa').order('orden').order('nombre'),
+    sb.from('configuracion').select('valor').eq('clave', 'proveedores_proponen_categorias').maybeSingle()
+  ]);
+  if (cats.error) { cont.innerHTML = `<div class="alerta error">${esc(mensajeError(cats.error))}</div>`; return; }
+  categorias = cats.data;
+  permitirNueva = cfg.data ? cfg.data.valor === true : true;
   pasoEmpresa();
 }
 
@@ -181,8 +186,8 @@ function pasoUbicacion() {
       ${htmlUbicacion(datos)}
       <div class="mt">
         <div class="seccion-titulo" style="margin-top:8px">Categorías de productos y servicios<span style="color:var(--rojo)">*</span></div>
-        ${htmlCategorias(categorias, new Set(datos.categorias || []))}
-        <p class="ayuda texto-chico texto-gris mt" style="margin-top:6px">Si su categoría no aparece podrá proponerla al CLRAH desde su panel.</p>
+        ${htmlCategorias(categorias, new Set(datos.categorias || []), { permitirNueva })}
+        <p class="ayuda texto-chico texto-gris mt" style="margin-top:6px">Elija de la lista todas las que apliquen.${permitirNueva ? ' Si la suya no aparece, use "Otra categoría" al final de la lista.' : ''}</p>
         <p class="error-campo" id="err-cat" hidden></p>
       </div>
       <div class="acciones der mt">
@@ -193,6 +198,7 @@ function pasoUbicacion() {
   </section>`;
   const f = $('#f-ubic');
   activarUbicacion(f, { lat: datos.lat != null ? Number(datos.lat) : null, lng: datos.lng != null ? Number(datos.lng) : null });
+  activarCategorias(f, categorias, { permitirNueva, crearCategoria });
   $('#atras').addEventListener('click', () => { Object.assign(datos, leerForm(f), { categorias: categoriasMarcadas(f) }); pasoEmpresa(); });
   f.addEventListener('submit', async ev => {
     ev.preventDefault();
@@ -212,4 +218,11 @@ function pasoUbicacion() {
       location.href = 'panel.html?nuevo=1#inventario';
     });
   });
+}
+
+/** Crea (o reutiliza) una categoría escrita por el usuario. */
+async function crearCategoria(nombre) {
+  const { data, error } = await sb.rpc('agregar_categoria', { p_nombre: nombre });
+  if (error) throw new Error(mensajeError(error));
+  return data;
 }
