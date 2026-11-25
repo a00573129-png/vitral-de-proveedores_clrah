@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vitral de Proveedores · Observatorio del CLRAH</title>
+  <meta name="description" content="Directorio público de empresas proveedoras de bienes y servicios para la asistencia humanitaria del CLRAH.">
+  <link rel="stylesheet" href="js/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="css/clrah.css">
+  <link rel="stylesheet" href="css/vitral.css">
+</head>
+<body>
+  <header class="hdr" id="hdr"></header>
+
+  <main class="contenedor" id="principal">
+    <div class="titulo-pagina">
+      <div>
+        <h1>Vitral de Proveedores</h1>
+        <p>Directorio de empresas que proveen bienes y servicios para la asistencia humanitaria. Consulte su información, ubicación e inventario.</p>
+      </div>
+    </div>
+
+    <div id="aviso"></div>
+
+    <section class="kpis" aria-label="Resumen del directorio">
+      <div class="kpi"><div class="kpi-etq">Proveedores publicados</div><div class="kpi-valor" id="k-prov">—</div><div class="kpi-sub" id="k-prov-sub">&nbsp;</div></div>
+      <div class="kpi"><div class="kpi-etq">Productos registrados</div><div class="kpi-valor" id="k-prod">—</div><div class="kpi-sub">En inventarios publicados</div></div>
+      <div class="kpi"><div class="kpi-etq">Servicios registrados</div><div class="kpi-valor" id="k-serv">—</div><div class="kpi-sub">En inventarios publicados</div></div>
+      <div class="kpi"><div class="kpi-etq">Con certificaciones</div><div class="kpi-valor" id="k-cert">—</div><div class="kpi-sub" id="k-cert-sub">&nbsp;</div></div>
+    </section>
+
+    <section class="card" aria-label="Búsqueda y filtros">
+      <form class="filtros" id="filtros" role="search" onsubmit="return false">
+        <div class="campo campo-buscar">
+          <label for="f-q">Buscar</label>
+          <input type="search" id="f-q" placeholder="Empresa, producto o servicio" autocomplete="off">
+        </div>
+        <div class="campo">
+          <label for="f-cat">Categoría</label>
+          <select id="f-cat"><option value="">Todas</option></select>
+        </div>
+        <div class="campo">
+          <label for="f-prov">Provincia</label>
+          <select id="f-prov"><option value="">Todas</option></select>
+        </div>
+        <div class="campo">
+          <label for="f-cert">Certificación</label>
+          <select id="f-cert"><option value="">Todas</option><option value="__alguna">Con alguna certificación</option></select>
+        </div>
+        <div class="campo">
+          <label for="f-tipo">Oferta</label>
+          <select id="f-tipo">
+            <option value="">Productos y servicios</option>
+            <option value="producto">Ofrece productos</option>
+            <option value="servicio">Ofrece servicios</option>
+            <option value="frio">Con cámara frigorífica</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="f-reg">Registro</label>
+          <select id="f-reg">
+            <option value="">Todos</option>
+            <option value="cuenta">Proveedor con cuenta activa</option>
+            <option value="referencia">Ficha de referencia CLRAH</option>
+          </select>
+        </div>
+        <div class="acciones">
+          <button type="reset" class="btn btn-sec" id="f-limpiar">Limpiar</button>
+        </div>
+      </form>
+    </section>
+
+    <div class="tabs" role="tablist" aria-label="Vistas del directorio">
+      <button class="tab" role="tab" data-tab="directorio" aria-controls="p-directorio">Directorio</button>
+      <button class="tab" role="tab" data-tab="mapa" aria-controls="p-mapa">Mapa</button>
+    </div>
+
+    <div class="barra-resultados">
+      <p class="conteo" id="conteo" aria-live="polite">Cargando…</p>
+      <label class="flex texto-chico texto-gris" for="orden">Ordenar
+        <select id="orden">
+          <option value="nombre">Nombre (A–Z)</option>
+          <option value="inventario">Mayor inventario</option>
+          <option value="reciente">Actualización reciente</option>
+        </select>
+      </label>
+    </div>
+
+    <section data-panel="directorio" id="p-directorio" role="tabpanel">
+      <div class="rejilla-prov" id="lista"><div class="cargando-bloque"><span class="spinner"></span>Cargando proveedores…</div></div>
+    </section>
+
+    <section data-panel="mapa" id="p-mapa" role="tabpanel" hidden>
+      <div class="card">
+        <div class="card-cab">
+          <div>
+            <div class="card-titulo">Ubicación de proveedores</div>
+            <div class="card-sub" id="mapa-sub">Seleccione un proveedor en la lista o en el mapa.</div>
+          </div>
+        </div>
+        <div class="mapa-layout">
+          <div class="mapa-lista" id="mapa-lista"></div>
+          <div class="mapa" id="mapa" aria-label="Mapa de proveedores"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="pie" id="pie"></footer>
+
+  <script src="js/vendor/supabase.js"></script>
+  <script src="js/vendor/leaflet/leaflet.js"></script>
+  <script src="js/config.js"></script>
+  <script type="module" src="js/vitral.js"></script>
+</body>
+</html>

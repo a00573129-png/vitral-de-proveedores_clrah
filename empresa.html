@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Perfil de proveedor · Vitral de Proveedores CLRAH</title>
+  <link rel="stylesheet" href="js/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="css/clrah.css">
+  <link rel="stylesheet" href="css/vitral.css">
+</head>
+<body>
+  <header class="hdr" id="hdr"></header>
+
+  <main class="contenedor" id="principal">
+    <nav class="migas" aria-label="Ruta"><a href="index.html">Vitral de Proveedores</a> / <span id="miga-nombre">Perfil</span></nav>
+    <div id="contenido"><div class="cargando-bloque"><span class="spinner"></span>Cargando perfil…</div></div>
+  </main>
+
+  <footer class="pie" id="pie"></footer>
+
+  <script src="js/vendor/supabase.js"></script>
+  <script src="js/vendor/leaflet/leaflet.js"></script>
+  <script src="js/config.js"></script>
+  <script type="module" src="js/empresa.js"></script>
+</body>
+</html>

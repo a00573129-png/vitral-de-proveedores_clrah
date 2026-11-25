@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registro de proveedores · Vitral de Proveedores CLRAH</title>
+  <link rel="stylesheet" href="js/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="css/clrah.css">
+  <link rel="stylesheet" href="css/vitral.css">
+  <link rel="stylesheet" href="css/panel.css">
+</head>
+<body>
+  <header class="hdr" id="hdr"></header>
+
+  <main class="contenedor angosto" id="principal">
+    <div class="titulo-pagina">
+      <div>
+        <h1>Registro de proveedores</h1>
+        <p>Su empresa aparecerá en el vitral después de que el CLRAH revise y apruebe la solicitud.</p>
+      </div>
+    </div>
+
+    <ol class="pasos" id="pasos" aria-label="Pasos del registro">
+      <li data-paso="1"><span class="p-nombre">Cuenta de acceso</span></li>
+      <li data-paso="2"><span class="p-nombre">Datos de la empresa</span></li>
+      <li data-paso="3"><span class="p-nombre">Ubicación y categorías</span></li>
+      <li data-paso="4"><span class="p-nombre">Productos y servicios</span></li>
+      <li data-paso="5"><span class="p-nombre">Certificaciones</span></li>
+      <li data-paso="6"><span class="p-nombre">Envío y revisión</span></li>
+    </ol>
+
+    <div id="aviso"></div>
+    <div id="contenido"><div class="cargando-bloque"><span class="spinner"></span>Cargando…</div></div>
+  </main>
+
+  <footer class="pie" id="pie"></footer>
+
+  <script src="js/vendor/supabase.js"></script>
+  <script src="js/vendor/leaflet/leaflet.js"></script>
+  <script src="js/config.js"></script>
+  <script type="module" src="js/registro.js"></script>
+</body>
+</html>

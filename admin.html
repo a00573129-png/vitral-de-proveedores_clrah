@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Administración · Vitral de Proveedores CLRAH</title>
+  <link rel="stylesheet" href="css/clrah.css">
+  <link rel="stylesheet" href="css/vitral.css">
+  <link rel="stylesheet" href="css/panel.css">
+</head>
+<body>
+  <header class="hdr" id="hdr"></header>
+
+  <main class="contenedor ancho" id="principal">
+    <div class="titulo-pagina">
+      <div>
+        <h1>Administración del Vitral</h1>
+        <p>Validación de proveedores, certificaciones, catálogos, cuentas y bitácora de actividad.</p>
+      </div>
+    </div>
+
+    <section class="kpis" aria-label="Resumen">
+      <div class="kpi"><div class="kpi-etq">Publicados</div><div class="kpi-valor" id="k-pub">—</div><div class="kpi-sub" id="k-pub-sub">&nbsp;</div></div>
+      <div class="kpi"><div class="kpi-etq">Solicitudes por revisar</div><div class="kpi-valor" id="k-rev">—</div><div class="kpi-sub">Enviadas o en revisión</div></div>
+      <div class="kpi"><div class="kpi-etq">Certificaciones por revisar</div><div class="kpi-valor" id="k-cert">—</div><div class="kpi-sub">Con documento enviado</div></div>
+      <div class="kpi"><div class="kpi-etq">Sin ubicación en mapa</div><div class="kpi-valor" id="k-ubic">—</div><div class="kpi-sub">Empresas publicadas</div></div>
+    </section>
+
+    <div class="tabs" role="tablist" aria-label="Secciones de administración">
+      <button class="tab" role="tab" data-tab="solicitudes">Solicitudes <span class="contador" id="c-sol">0</span></button>
+      <button class="tab" role="tab" data-tab="proveedores">Proveedores</button>
+      <button class="tab" role="tab" data-tab="certificaciones">Certificaciones <span class="contador" id="c-cert">0</span></button>
+      <button class="tab" role="tab" data-tab="requisitos">Requisitos</button>
+      <button class="tab" role="tab" data-tab="categorias">Categorías <span class="contador" id="c-cat">0</span></button>
+      <button class="tab" role="tab" data-tab="cuentas">Cuentas <span class="contador" id="c-cta">0</span></button>
+      <button class="tab" role="tab" data-tab="bitacora">Bitácora</button>
+    </div>
+
+    <section data-panel="solicitudes" role="tabpanel" id="p-solicitudes"></section>
+    <section data-panel="proveedores" role="tabpanel" id="p-proveedores" hidden></section>
+    <section data-panel="certificaciones" role="tabpanel" id="p-certificaciones" hidden></section>
+    <section data-panel="requisitos" role="tabpanel" id="p-requisitos" hidden></section>
+    <section data-panel="categorias" role="tabpanel" id="p-categorias" hidden></section>
+    <section data-panel="cuentas" role="tabpanel" id="p-cuentas" hidden></section>
+    <section data-panel="bitacora" role="tabpanel" id="p-bitacora" hidden></section>
+  </main>
+
+  <footer class="pie" id="pie"></footer>
+
+  <script src="js/vendor/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>

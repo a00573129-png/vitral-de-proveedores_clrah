@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel del proveedor · Vitral de Proveedores CLRAH</title>
+  <link rel="stylesheet" href="js/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="css/clrah.css">
+  <link rel="stylesheet" href="css/vitral.css">
+  <link rel="stylesheet" href="css/panel.css">
+</head>
+<body>
+  <header class="hdr" id="hdr"></header>
+
+  <main class="contenedor" id="principal">
+    <div id="banner"></div>
+    <div class="titulo-pagina">
+      <div>
+        <h1 id="titulo">Panel del proveedor</h1>
+        <p id="subtitulo">Administre la información pública y el inventario de su empresa.</p>
+      </div>
+      <div class="acciones" id="acciones-titulo"></div>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Secciones del panel">
+      <button class="tab" role="tab" data-tab="solicitud">Estado de la solicitud</button>
+      <button class="tab" role="tab" data-tab="empresa">Mi empresa</button>
+      <button class="tab" role="tab" data-tab="inventario">Inventario <span class="contador" id="c-inv">0</span></button>
+      <button class="tab" role="tab" data-tab="certificaciones">Certificaciones <span class="contador" id="c-cert">0</span></button>
+      <button class="tab" role="tab" data-tab="historial">Historial</button>
+    </div>
+
+    <section data-panel="solicitud" role="tabpanel" id="p-solicitud"></section>
+    <section data-panel="empresa" role="tabpanel" id="p-empresa" hidden></section>
+    <section data-panel="inventario" role="tabpanel" id="p-inventario" hidden></section>
+    <section data-panel="certificaciones" role="tabpanel" id="p-certificaciones" hidden></section>
+    <section data-panel="historial" role="tabpanel" id="p-historial" hidden></section>
+  </main>
+
+  <footer class="pie" id="pie"></footer>
+
+  <script src="js/vendor/supabase.js"></script>
+  <script src="js/vendor/leaflet/leaflet.js"></script>
+  <script src="js/config.js"></script>
+  <script type="module" src="js/panel.js"></script>
+</body>
+</html>
